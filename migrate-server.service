@@ -2,7 +2,7 @@
 Description=Migration Server
 
 [Service]
-Environment=PATH=/share/runc.adrian:/share/criu/criu:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
 ExecStart=/usr/local/bin/migrate-server.py
 
 [Install]
