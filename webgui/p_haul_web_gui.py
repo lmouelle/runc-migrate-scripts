@@ -87,12 +87,12 @@ def migrate():
     mem_socket.connect(dest_host)
 
     identifier = pid
-    if htype == 'lxc':
+    if htype != 'pid':
         if cname:
             identifier = cname
         else:
             return flask.jsonify({"succeeded": False,
-                                  "why": "No container name given for LXC"})
+                                  "why": "No container name given"})
 
     target_args = ['./p.haul'] + [str(htype), str(identifier),
                                   '--to', str(partner),
