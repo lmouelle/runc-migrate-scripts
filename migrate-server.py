@@ -46,17 +46,7 @@ def clientthread(conn, addr):
         try:
             msg = json.loads(data)
             if 'restore' in msg:
-
                 os.system('criu -V')
-
-                down = True
-                while down:
-                    try:
-                        test_socket = socket.socket()
-                        test_socket.bind(('192.168.122.99',23456))
-                    except:
-                        continue
-                    down = False
 
                 try:
                     lazy = bool(distutils.util.strtobool(msg['restore']['lazy']))
