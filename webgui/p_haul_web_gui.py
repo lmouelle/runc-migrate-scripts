@@ -68,6 +68,34 @@ def migrate():
     Attempt to migrate a process, where the PID is given in the URL
     parameter "pid".
     """
+    def pid_cmd_call(identifier):
+        rpc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        rpc_socket.connect(dest_host)
+
+        mem_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        mem_socket.connect(dest_host)
+
+        cmd = ['./p.haul', 'pid', identifier,
+               '--to', PARTNER_ADDRESS,
+               '--fdrpc', str(rpc_socket.fileno()),
+               '--fdmem', str(mem_socket.fileno()),
+               '-v 4',
+               '--shell-job']
+        return subprocess.call(' '.join(cmd), shell=True)
+
+    def runc_cmd_call(identifier):
+        cmd = ['./migrate', str(identifier), PARTNER_ADDRESS]
+        return subprocess.call(' '.join(cmd), shell=True)
+
+    def cmd_call(htype, identifier):
+        if htype == 'pid':
+            return pid_cmd_call(identifier)
+        elif htype == 'runc':
+            return runc_cmd_call(identifier)
+        else:
+            raise Exception("Cannot determine call for unknown htype {0}"
+                            .format(htype))
+
     cname = flask.request.args.get('cname')
     pid = flask.request.args.get('pid')
     htype = flask.request.args.get('htype') or webgui.procs.HAUL_TYPE_DEFAULT
@@ -80,11 +108,6 @@ def migrate():
                               "why": "Unsupported htype {0}".format(htype)})
 
     dest_host = PARTNER_ADDRESS, RPC_PORT
-    rpc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    rpc_socket.connect(dest_host)
-
-    mem_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    mem_socket.connect(dest_host)
 
     identifier = pid
     if htype != 'pid':
@@ -94,16 +117,7 @@ def migrate():
             return flask.jsonify({"succeeded": False,
                                   "why": "No container name given"})
 
-    target_args = ['./p.haul'] + [str(htype), str(identifier),
-                                  '--to', str(PARTNER_ADDRESS),
-                                  '--fdrpc', str(rpc_socket.fileno()),
-                                  '--fdmem', str(mem_socket.fileno()),
-                                  '-v', str(4),
-                                  '--shell-job']
-
-    cmd = ' '.join(target_args)
-    print("Exec p.haul: {0}".format(cmd))
-    result = subprocess.call(cmd, shell=True)
+    result = cmd_call(htype, identifier)
 
     return flask.jsonify({"succeeded": int(result) == 0,
                           "why": "p.haul exited with code {0}".format(result)})
