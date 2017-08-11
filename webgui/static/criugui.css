@@ -47,12 +47,12 @@ svg {
   stroke-width: 1px;
 }
 
-.node circle.lxc-circle {
+.node circle.container-circle {
     fill: #009933;
     stroke: #003300;
 }
 
-.node text.lxc-label {
+.node text.container-label {
     fill: #009933;
     font-family: "Liberation Mono", monospace;
     text-shadow:

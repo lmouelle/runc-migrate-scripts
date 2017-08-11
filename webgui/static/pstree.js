@@ -184,11 +184,11 @@ PSTree.prototype.redraw = function(e) {
 
   nodeGroups.append("circle")
 	.attr({r: 6.0})
-	.classed("lxc-circle", function(d) { return d.htype === "lxc" });
+	.classed("container-circle", function(d) { return d.htype !== "pid" });
   nodeGroups.append("text")
       .attr(nodeLabelOffset)
       .classed("node-label", true)
-      .classed("lxc-label", function(d) { return d.htype === "lxc" })
+      .classed("container-label", function(d) { return d.htype !== "pid" })
   nodes
       .transition()
       .duration(200)
