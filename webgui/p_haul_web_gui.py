@@ -19,10 +19,10 @@ import subprocess
 import requests
 import socket
 
-default_port = 8080
-partner = "localhost"
-myself = "localhost"
-rpc_port = 12345
+DEFAULT_PORT = 8080
+PARTNER_ADDRESS = "localhost"
+SELF_ADDRESS = "localhost"
+RPC_PORT = 12345
 
 APP = flask.Flask(__name__)
 
@@ -44,21 +44,21 @@ def index():
 @APP.route('/partners')
 def partners():
     result = [{"name": "First Host (%s)" %
-               myself, "address": "http://%s:8080" %
-               myself}, {"name": "Second Host (%s)" %
-                         partner, "address": "http://%s:8080" %
-                         partner}]
+               SELF_ADDRESS, "address": "http://%s:8080" %
+               SELF_ADDRESS}, {"name": "Second Host (%s)" %
+                         PARTNER_ADDRESS, "address": "http://%s:8080" %
+                         PARTNER_ADDRESS}]
     return flask.jsonify(results=result)
 
 
 @APP.route('/register', methods=['POST'])
 def register():
-    global partner
-    global myself
+    global PARTNER
+    global SELF_ADDRESS
 
-    myself = flask.request.form.get("partner")
-    partner = flask.request.remote_addr
-    return flask.jsonify({"your_ip": partner})
+    SELF_ADDRESS = flask.request.form.get("partner")
+    PARTNER_ADDRESS = flask.request.remote_addr
+    return flask.jsonify({"your_ip": PARTNER_ADDRESS})
 
 
 @APP.route('/migrate')
@@ -79,7 +79,7 @@ def migrate():
         return flask.jsonify({"succeeded": False,
                               "why": "Unsupported htype {0}".format(htype)})
 
-    dest_host = partner, rpc_port
+    dest_host = PARTNER_ADDRESS, RPC_PORT
     rpc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     rpc_socket.connect(dest_host)
 
@@ -95,7 +95,7 @@ def migrate():
                                   "why": "No container name given"})
 
     target_args = ['./p.haul'] + [str(htype), str(identifier),
-                                  '--to', str(partner),
+                                  '--to', str(PARTNER_ADDRESS),
                                   '--fdrpc', str(rpc_socket.fileno()),
                                   '--fdmem', str(mem_socket.fileno()),
                                   '-v', str(4),
@@ -109,18 +109,17 @@ def migrate():
                           "why": "p.haul exited with code {0}".format(result)})
 
 
-def start_web_gui(migration_partner, _rpc_port, _debug=False):
-    global partner
-    global myself
-    global rpc_port
-    rpc_port = _rpc_port
-    partner = migration_partner
-    if partner:
+def start_web_gui(migration_partner, rpc_port, _debug=False):
+    global PARTNER_ADDRESS
+    global SELF_ADDRESS
+    global RPC_PORT
+    RPC_PORT = rpc_port
+    PARTNER_ADDRESS = migration_partner
+    if PARTNER_ADDRESS:
         try:
-            myself = requests.post("http://%s:%d/register" %
-                                   (partner, default_port),
-                                   data={"partner": partner}
-                                   ).json()['your_ip']
+            SELF_ADDRESS = requests.post("http://%s:%d/register" %
+                                         (PARTNER_ADDRESS, DEFAULT_PORT),
+                                         data={"partner": PARTNER_ADDRESS}).json()['your_ip']
         except Exception:
             pass
-    APP.run(host='0.0.0.0', port=default_port, debug=_debug, threaded=True)
+    APP.run(host='0.0.0.0', port=DEFAULT_PORT, debug=_debug, threaded=True)
