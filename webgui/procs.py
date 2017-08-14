@@ -19,10 +19,11 @@ import json
 import os
 import psutil
 import time
+import subprocess
 
 from webgui.p_haul_web_gui import APP
 
-KNOWN_HAUL_TYPES = {'pid'}
+KNOWN_HAUL_TYPES = {'runc', 'pid'}
 HAUL_TYPE_DEFAULT = 'pid'
 
 
@@ -34,6 +35,23 @@ def procs():
     on this machine as a JSON object, where children processes
     are stored hierarchically beneath their parent processes.
     """
+
+    def get_runc_containers():
+        container_procs = {}
+        pd = subprocess.Popen(['runc', 'list'], stdout=subprocess.PIPE)
+        for line in pd.stdout:
+            container_name, pid, status, bundle, created, owner = line.split()
+            container_procs[str(pid)] = {
+                'cname': container_name,
+                'status': status,
+                'htype': 'runc',
+                'is_container': True,
+                'pid': pid,
+                'bundle': bundle,
+                'created': created,
+                'owner': owner
+            }
+        return container_procs
 
     def generate():
         """Respond to an HTTP GET request
@@ -47,6 +65,7 @@ def procs():
         while True:
             flatprocs = []
             root = {}
+            container_procs = get_runc_containers()
 
             for p in psutil.process_iter():
                 if callable(p.cmdline):
@@ -67,7 +86,11 @@ def procs():
                     "id": p.pid,
                     "parent": p.ppid() if callable(p.ppid) else p.ppid,
                     "children": [],
+                    "htype": HAUL_TYPE_DEFAULT,
+                    "is_container": False
                 }
+                if str(p.pid) in container_procs:
+                    proc.update(container_procs[str(p.pid)])
 
                 if p.pid == 1:
                     root = proc
@@ -97,6 +120,9 @@ def procs():
 
         for childProc in flatprocs:
             if "parent" in childProc and childProc["parent"] == proc["id"]:
+                if proc['is_container']:
+                    childProc['is_container'] = True
+                    childProc['htype'] = proc['htype']
                 proc["children"].append(childProc)
             else:
                 remainder.append(childProc)
