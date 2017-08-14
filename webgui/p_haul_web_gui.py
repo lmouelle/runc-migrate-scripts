@@ -120,7 +120,7 @@ def migrate():
     result = cmd_call(htype, identifier)
 
     return flask.jsonify({"succeeded": int(result) == 0,
-                          "why": "p.haul exited with code {0}".format(result)})
+                          "why": "Exited with code {0}".format(result)})
 
 
 def start_web_gui(migration_partner, rpc_port, _debug=False):
