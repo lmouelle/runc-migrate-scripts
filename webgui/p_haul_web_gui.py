@@ -53,7 +53,7 @@ def partners():
 
 @APP.route('/register', methods=['POST'])
 def register():
-    global PARTNER
+    global PARTNER_ADDRESS
     global SELF_ADDRESS
 
     SELF_ADDRESS = flask.request.form.get("partner")
@@ -68,7 +68,7 @@ def migrate():
     Attempt to migrate a process, where the PID is given in the URL
     parameter "pid".
     """
-    def pid_cmd_call(identifier):
+    def pid_cmd_call(identifier, partner_addr):
         rpc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         rpc_socket.connect(dest_host)
 
@@ -76,25 +76,28 @@ def migrate():
         mem_socket.connect(dest_host)
 
         cmd = ['./p.haul', 'pid', identifier,
-               '--to', PARTNER_ADDRESS,
+               '--to', partner_addr,
                '--fdrpc', str(rpc_socket.fileno()),
                '--fdmem', str(mem_socket.fileno()),
                '-v 4',
                '--shell-job']
         return subprocess.call(' '.join(cmd), shell=True)
 
-    def runc_cmd_call(identifier):
-        cmd = ['./migrate', str(identifier), PARTNER_ADDRESS]
+    def runc_cmd_call(identifier, partner_addr):
+        cmd = ['./migrate', str(identifier), partner_addr]
         return subprocess.call(' '.join(cmd), shell=True)
 
-    def cmd_call(htype, identifier):
+    def cmd_call(htype, identifier, partner_address):
         if htype == 'pid':
-            return pid_cmd_call(identifier)
+            return pid_cmd_call(identifier, partner_address)
         elif htype == 'runc':
-            return runc_cmd_call(identifier)
+            return runc_cmd_call(identifier, partner_address)
         else:
             raise Exception("Cannot determine call for unknown htype {0}"
                             .format(htype))
+
+    global PARTNER_ADDRESS
+    global RPC_PORT
 
     cname = flask.request.args.get('cname')
     pid = flask.request.args.get('pid')
@@ -117,7 +120,7 @@ def migrate():
             return flask.jsonify({"succeeded": False,
                                   "why": "No container name given"})
 
-    result = cmd_call(htype, identifier)
+    result = cmd_call(htype, identifier, PARTNER_ADDRESS)
 
     return flask.jsonify({"succeeded": int(result) == 0,
                           "why": "Exited with code {0}".format(result)})
