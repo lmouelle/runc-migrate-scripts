@@ -55,7 +55,7 @@ def clientthread(conn, addr):
 
                 old_cwd = os.getcwd()
                 os.chdir(msg['restore']['path'])
-                cmd = 'runc restore -d --image-path ' + msg['restore']['image_path']
+                cmd = 'runc restore --shell-job -d --image-path ' + msg['restore']['image_path']
                 cmd += ' --work-path ' + msg['restore']['image_path']
                 if lazy:
                         cmd += ' --lazy-pages'
