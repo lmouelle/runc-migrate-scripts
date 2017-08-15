@@ -5,6 +5,12 @@ import socket
 import argparse
 import thread
 
+import webgui.migrate_web_gui_service
+from subprocess import Popen
+from os.path import realpath
+from os.path import dirname
+from os.path import join
+
 # Usage
 # p.haul-wrap service
 # p.haul-wrap client <destination> <type> <id>
@@ -26,8 +32,11 @@ default_service_bind_addr = "0.0.0.0"
 
 def start_web_gui(partner, rpc_port):
 	"""Start web gui if requested"""
-	import webgui.migrate_web_gui_service
 
+	server_path = join(dirname(realpath(__file__)), 'migrate_server.py')
+	result = Popen(server_path, shell=True)
+	if not result:
+		raise Exception('Migration server failed to start')
 	thread.start_new_thread(webgui.migrate_web_gui_service.start_web_gui,
 		(partner, rpc_port))
 
