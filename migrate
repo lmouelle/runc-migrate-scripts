@@ -63,7 +63,6 @@ def pre_dump():
 def real_dump(precopy, postcopy):
     old_cwd = os.getcwd()
     os.chdir(base_path)
-    cmd = 'runc checkpoint --image-path image --leave-running'
     cmd = 'runc checkpoint --image-path image '
     if precopy:
         cmd += ' --parent-path ../parent'
