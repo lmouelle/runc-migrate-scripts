@@ -21,7 +21,7 @@ import psutil
 import time
 import subprocess
 
-from webgui.p_haul_web_gui import APP
+from webgui.migrate_web_gui_service import APP
 
 KNOWN_HAUL_TYPES = {'runc', 'pid'}
 HAUL_TYPE_DEFAULT = 'pid'

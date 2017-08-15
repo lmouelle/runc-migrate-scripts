@@ -26,9 +26,9 @@ default_service_bind_addr = "0.0.0.0"
 
 def start_web_gui(partner, rpc_port):
 	"""Start web gui if requested"""
-	import webgui.p_haul_web_gui
+	import webgui.migrate_web_gui_service
 
-	thread.start_new_thread(webgui.p_haul_web_gui.start_web_gui,
+	thread.start_new_thread(webgui.migrate_web_gui_service.start_web_gui,
 		(partner, rpc_port))
 
 
